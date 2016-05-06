@@ -268,6 +268,8 @@ def test_select_shakespeare():
     assert count('div[class|=dialog]') == 50 # ? Seems right
 #    assert count('div[class!=madeup]') == 243 # ? Seems right
     assert count('div[class~=dialog]') == 51 # ? Seems right
+    assert count('div:match(CELIA)') == 26
+    assert count('div:match(^CELIA)') == 21
 
 HTML_IDS = '''
 <html id="html" xmlns="http://www.w3.org/1999/xhtml"><head>

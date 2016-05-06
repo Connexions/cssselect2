@@ -332,6 +332,15 @@ class ElementWrapper(object):
         return (self.in_html_document and
                 self.namespace_url == 'http://www.w3.org/1999/xhtml')
 
+    def textstring(self):
+        """Returns a text string of all text for this subtree"""
+        strval = u''
+        strval += (self.etree_element.text or u'')
+        for elem in self.iter_children():
+            strval += elem.textstring()
+        strval += (self.etree_element.tail or u'')
+        return strval
+
 
 def _split_etree_tag(tag):
     pos = tag.rfind('}')
@@ -340,3 +349,6 @@ def _split_etree_tag(tag):
     else:
         assert tag[0] == '{'
         return tag[1:pos], tag[pos + 1:]
+
+
+

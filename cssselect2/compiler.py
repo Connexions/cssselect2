@@ -22,7 +22,7 @@ def compile_selector_list(input, namespaces=None):
     :param input:
         A :term:`tinycss2:string`,
         or an iterable of tinycss2 :term:`tinycss2:component values`
-        such as the :attr:`~tinycss2.ast.QualifiedRule.predule` of a style rule.
+        such as the :attr:`~tinycss2.ast.QualifiedRule.prelude` of a css rule.
     :param namespaces:
         A optional dictionary of all `namespace prefix declarations
         <http://www.w3.org/TR/selectors/#nsdecl>`_ in scope for this selector.
@@ -210,7 +210,7 @@ def _compile_node(selector):
     elif isinstance(selector, parser.PseudoClassSelector):
         if selector.name == 'link':
             return ('%s and el.get_attr("href") is not None'
-                     % html_tag_eq('a', 'area', 'link'))
+                    % html_tag_eq('a', 'area', 'link'))
         elif selector.name == 'enabled':
             return (
                 '(%s and el.get_attr("disabled") is None'
@@ -236,13 +236,13 @@ def _compile_node(selector):
             )
         elif selector.name == 'checked':
             return (
-                '(%s and el.get_attr("checked") is not None and '
-                'ascii_lower(el.get_attr("type", "")) in ("checkbox", "radio"))'
-                ' or (%s and el.get_attr("selected") is not None)'
-                % (
-                    html_tag_eq('input', 'menuitem'),
-                    html_tag_eq('option'),
-                )
+               '(%s and el.get_attr("checked") is not None and '
+               'ascii_lower(el.get_attr("type", "")) in ("checkbox", "radio"))'
+               ' or (%s and el.get_attr("selected") is not None)'
+               % (
+                   html_tag_eq('input', 'menuitem'),
+                   html_tag_eq('option'),
+               )
             )
         elif selector.name in ('visited', 'hover', 'active', 'focus',
                                'target'):
@@ -320,7 +320,8 @@ def _compile_node(selector):
             return ('re.search("%s", el.textstring())'
                     ' is not None' % regex)
         else:
-            raise SelectorError('Unknown functional pseudo-class', selector.name)
+            raise SelectorError('Unknown functional pseudo-class',
+                                selector.name)
 
     else:
         raise TypeError(type(selector), selector)

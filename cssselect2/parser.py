@@ -133,6 +133,8 @@ def parse_simple_selector(tokens, namespaces, in_negation=False):
                 if in_negation:
                     raise SelectorError(next, 'nested :not()')
                 return parse_negation(next, namespaces), None
+            elif name == 'has':
+                return parse_has(next, namespaces), None
             else:
                 return FunctionalPseudoClassSelector(name,
                                                      next.arguments), None
@@ -156,6 +158,17 @@ def parse_negation(negation_token, namespaces):
     else:
         raise SelectorError(
             negation_token, ':not() only accepts a simple selector')
+
+
+def parse_has(has_token, namespaces):
+    tokens = TokenStream(has_token.arguments)
+    selector = parse_selector(tokens, namespaces, {})
+    tokens.skip_whitespace()
+    if tokens.next() is None:
+        return HasSelector([selector.parsed_tree])
+    else:
+        raise SelectorError(
+            has_token, ':has() is apparently still buggy. It should accept any selector')
 
 
 def parse_attribute_selector(tokens, namespaces):
@@ -414,3 +427,7 @@ class FunctionalPseudoClassSelector(object):
 class NegationSelector(CompoundSelector):
     def __repr__(self):
         return ':not(%r)' % CompoundSelector.__repr__(self)
+
+class HasSelector(CompoundSelector):
+    def __repr__(self):
+        return ':has(%r)' % CompoundSelector.__repr__(self)

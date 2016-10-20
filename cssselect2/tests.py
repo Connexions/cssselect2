@@ -208,6 +208,15 @@ def test_select():
     assert pcss(':checked') == [
         'checkbox-checked', 'checkbox-disabled-checked']
 
+    # Check the "has" selector
+    assert pcss(':has(a > foobar)') == []
+    assert pcss('ol:has(li)') == ['first-ol']
+    assert pcss('ol:has(li > div)') == ['first-ol']
+    assert pcss('ol:has(li div)') == ['first-ol']
+    assert pcss(':not(:has(a > foobar))') == all_ids
+    assert pcss('ol:has(div)') == ['first-ol']
+    # assert pcss('ol:has(> li)') == ['first-ol']
+
 
 def test_select_shakespeare():
     document = etree.fromstring(HTML_SHAKESPEARE)

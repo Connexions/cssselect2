@@ -147,6 +147,10 @@ def _compile_node(selector, extensions):
                 return '0'
             else:
                 return 'not (%s)' % test
+
+        elif isinstance(selector, parser.HasSelector):
+            return 'any((%s) for el in el.iter_subtree())' % test
+
         else:
             return test
 

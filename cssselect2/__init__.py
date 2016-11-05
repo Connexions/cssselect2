@@ -21,7 +21,7 @@ from .tree import ElementWrapper
 from .compiler import compile_selector_list, CompiledSelector
 
 
-VERSION = '0.2a0'
+VERSION = '0.2a1'
 
 
 class Matcher(object):

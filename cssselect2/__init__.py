@@ -51,7 +51,6 @@ class Matcher(object):
 
         """
         self.order += 1
-
         if selector.never_matches:
             return
 

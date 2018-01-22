@@ -12,9 +12,11 @@
 
 from __future__ import unicode_literals
 
+
 from tinycss2 import parse_component_value_list
 
 from ._compat import basestring
+
 
 __all__ = ['parse']
 
@@ -311,6 +313,7 @@ class Selector(object):
             return '%r::%s' % (self.parsed_tree, self.pseudo_element)
 
 
+
 class CombinedSelector(object):
     def __init__(self, left, combinator, right):
         #: Combined or compound selector
@@ -350,7 +353,7 @@ class CompoundSelector(object):
 
 
 class LocalNameSelector(object):
-    specificity = 0, 0, 1
+    specificity =  0, 0, 1
 
     def __init__(self, local_name):
         self.local_name, self.lower_local_name = local_name
@@ -360,7 +363,7 @@ class LocalNameSelector(object):
 
 
 class NamespaceSelector(object):
-    specificity = 0, 0, 0
+    specificity =  0, 0, 0
 
     def __init__(self, namespace):
         #: The namespace URL as a string,
@@ -375,7 +378,7 @@ class NamespaceSelector(object):
 
 
 class IDSelector(object):
-    specificity = 1, 0, 0
+    specificity =  1, 0, 0
 
     def __init__(self, ident):
         self.ident = ident
@@ -385,7 +388,7 @@ class IDSelector(object):
 
 
 class ClassSelector(object):
-    specificity = 0, 1, 0
+    specificity =  0, 1, 0
 
     def __init__(self, class_name):
         self.class_name = class_name
@@ -395,7 +398,7 @@ class ClassSelector(object):
 
 
 class AttributeSelector(object):
-    specificity = 0, 1, 0
+    specificity =  0, 1, 0
 
     def __init__(self, namespace, name, operator, value):
         self.namespace = namespace
@@ -412,7 +415,7 @@ class AttributeSelector(object):
 
 
 class PseudoClassSelector(object):
-    specificity = 0, 1, 0
+    specificity =  0, 1, 0
 
     def __init__(self, name):
         self.name = name
@@ -422,7 +425,7 @@ class PseudoClassSelector(object):
 
 
 class FunctionalPseudoClassSelector(object):
-    specificity = 0, 1, 0
+    specificity =  0, 1, 0
 
     def __init__(self, name, arguments):
         self.name = name

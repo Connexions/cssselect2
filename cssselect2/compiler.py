@@ -5,11 +5,11 @@ from __future__ import unicode_literals
 import re
 
 from tinycss2.nth import parse_nth
-
 from webencodings import ascii_lower
 
 from . import parser
 from .parser import SelectorError
+
 
 # http://dev.w3.org/csswg/selectors/#whitespace
 split_whitespace = re.compile('[^ \t\r\n\f]+').findall
@@ -184,7 +184,7 @@ def _compile_node(selector, extensions):
                 else:
                     return (
                         '%r in split_whitespace(el.etree_element.get(%s, ""))'
-                        % (value, key))
+                            % (value, key))
             elif selector.operator == '|=':
                 return ('next(v == %r or (v is not None and v.startswith(%r))'
                         '     for v in [el.etree_element.get(%s)])'
@@ -215,7 +215,7 @@ def _compile_node(selector, extensions):
     elif isinstance(selector, parser.PseudoClassSelector):
         if selector.name == 'link':
             return ('%s and el.etree_element.get("href") is not None'
-                    % html_tag_eq('a', 'area', 'link'))
+                     % html_tag_eq('a', 'area', 'link'))
         elif selector.name == 'enabled':
             return (
                 '(%s and el.etree_element.get("disabled") is None'
@@ -331,7 +331,6 @@ def _compile_node(selector, extensions):
         else:
             raise SelectorError('Unknown functional pseudo-class',
                                 selector.name)
-
     else:
         raise TypeError(type(selector), selector)
 

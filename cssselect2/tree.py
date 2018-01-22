@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 
 import xml.etree.ElementTree as etree
-
 from webencodings import ascii_lower
 
 from ._compat import basestring, ifilter
@@ -285,6 +284,7 @@ class ElementWrapper(object):
         self.__dict__[str('local_name')] = local_name
         return namespace_url
 
+
     @cached_property
     def id(self):
         """The ID of this element, as a string."""
@@ -342,6 +342,7 @@ class ElementWrapper(object):
         return self.parent.in_disabled_fieldset
 
 
+
 def _split_etree_tag(tag):
     pos = tag.rfind('}')
     if pos == -1:
@@ -349,8 +350,6 @@ def _split_etree_tag(tag):
     else:
         assert tag[0] == '{'
         return tag[1:pos], tag[pos + 1:]
-
-
 if hasattr(etree.Element, 'iter'):
     def etree_iter(element, tag=None):
         return element.iter(tag)

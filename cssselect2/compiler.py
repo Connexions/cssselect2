@@ -10,7 +10,6 @@ from webencodings import ascii_lower
 from . import parser
 from .parser import SelectorError
 
-
 # http://dev.w3.org/csswg/selectors/#whitespace
 split_whitespace = re.compile('[^ \t\r\n\f]+').findall
 

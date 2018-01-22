@@ -12,11 +12,9 @@
 
 from __future__ import unicode_literals
 
-
 from tinycss2 import parse_component_value_list
 
 from ._compat import basestring
-
 
 __all__ = ['parse']
 

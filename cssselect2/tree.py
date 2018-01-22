@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import xml.etree.ElementTree as etree
+
 from webencodings import ascii_lower
 
 from ._compat import basestring, ifilter

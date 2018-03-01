@@ -10,7 +10,6 @@ from webencodings import ascii_lower
 from . import parser
 from .parser import SelectorError
 
-
 # http://dev.w3.org/csswg/selectors/#whitespace
 split_whitespace = re.compile('[^ \t\r\n\f]+').findall
 
@@ -151,8 +150,7 @@ def _compile_node(selector, extensions):
             return test
 
     elif isinstance(selector, parser.LocalNameSelector):
-        return ('el.local_name == '
-                '(%r if el.is_html_element_in_html_document else %r)'
+        return ('el.local_name == (%r if el.in_html_document else %r)'
                 % (selector.lower_local_name, selector.local_name))
 
     elif isinstance(selector, parser.NamespaceSelector):
@@ -167,41 +165,44 @@ def _compile_node(selector, extensions):
     elif isinstance(selector, parser.AttributeSelector):
         if selector.namespace is not None:
             if selector.namespace:
-                key = '(%r if el.is_html_element_in_html_document else %r)' % (
+                key = '(%r if el.in_html_document else %r)' % (
                     '{%s}%s' % (selector.namespace, selector.lower_name),
                     '{%s}%s' % (selector.namespace, selector.name),
                 )
             else:
-                key = ('(%r if el.is_html_element_in_html_document else %r)'
+                key = ('(%r if el.in_html_document else %r)'
                        % (selector.lower_name, selector.name))
             value = selector.value
             if selector.operator is None:
-                return 'el.get_attr(%s) is not None' % key
+                return 'el.etree_element.get(%s) is not None' % key
             elif selector.operator == '=':
-                return 'el.get_attr(%s) == %r' % (key, value)
+                return 'el.etree_element.get(%s) == %r' % (key, value)
             elif selector.operator == '~=':
                 if len(value.split()) != 1 or value.strip() != value:
                     return '0'
                 else:
-                    return ('%r in split_whitespace(el.get_attr(%s, ""))'
-                            % (value, key))
+                    return (
+                        '%r in split_whitespace(el.etree_element.get(%s, ""))'
+                        % (value, key))
             elif selector.operator == '|=':
                 return ('next(v == %r or (v is not None and v.startswith(%r))'
-                        '     for v in [el.get_attr(%s)])'
+                        '     for v in [el.etree_element.get(%s)])'
                         % (value, value + '-', key))
             elif selector.operator == '^=':
                 if value:
-                    return 'el.get_attr(%s, "").startswith(%r)' % (key, value)
+                    return 'el.etree_element.get(%s, "").startswith(%r)' % (
+                        key, value)
                 else:
                     return '0'
             elif selector.operator == '$=':
                 if value:
-                    return 'el.get_attr(%s, "").endswith(%r)' % (key, value)
+                    return 'el.etree_element.get(%s, "").endswith(%r)' % (
+                        key, value)
                 else:
                     return '0'
             elif selector.operator == '*=':
                 if value:
-                    return '%r in el.get_attr(%s, "")' % (value, key)
+                    return '%r in el.etree_element.get(%s, "")' % (value, key)
                 else:
                     return '0'
             else:
@@ -212,14 +213,14 @@ def _compile_node(selector, extensions):
 
     elif isinstance(selector, parser.PseudoClassSelector):
         if selector.name == 'link':
-            return ('%s and el.get_attr("href") is not None'
+            return ('%s and el.etree_element.get("href") is not None'
                     % html_tag_eq('a', 'area', 'link'))
         elif selector.name == 'enabled':
             return (
-                '(%s and el.get_attr("disabled") is None'
+                '(%s and el.etree_element.get("disabled") is None'
                 ' and not el.in_disabled_fieldset) or'
-                '(%s and el.get_attr("disabled") is None) or '
-                '(%s and el.get_attr("href") is not None)'
+                '(%s and el.etree_element.get("disabled") is None) or '
+                '(%s and el.etree_element.get("href") is not None)'
                 % (
                     html_tag_eq('button', 'input', 'select', 'textarea',
                                 'option'),
@@ -229,9 +230,9 @@ def _compile_node(selector, extensions):
             )
         elif selector.name == 'disabled':
             return (
-                '(%s and (el.get_attr("disabled") is not None'
+                '(%s and (el.etree_element.get("disabled") is not None'
                 ' or el.in_disabled_fieldset)) or'
-                '(%s and el.get_attr("disabled") is not None)' % (
+                '(%s and el.etree_element.get("disabled") is not None)' % (
                     html_tag_eq('button', 'input', 'select', 'textarea',
                                 'option'),
                     html_tag_eq('optgroup', 'menuitem', 'fieldset'),
@@ -239,13 +240,14 @@ def _compile_node(selector, extensions):
             )
         elif selector.name == 'checked':
             return (
-               '(%s and el.get_attr("checked") is not None and '
-               'ascii_lower(el.get_attr("type", "")) in ("checkbox", "radio"))'
-               ' or (%s and el.get_attr("selected") is not None)'
-               % (
-                   html_tag_eq('input', 'menuitem'),
-                   html_tag_eq('option'),
-               )
+                '(%s and el.etree_element.get("checked") is not None and'
+                ' ascii_lower(el.etree_element.get("type", "")) '
+                ' in ("checkbox", "radio"))'
+                'or (%s and el.etree_element.get("selected") is not None)'
+                % (
+                    html_tag_eq('input', 'menuitem'),
+                    html_tag_eq('option'),
+                )
             )
         elif selector.name in ('visited', 'hover', 'active', 'focus',
                                'target'):
@@ -288,8 +290,7 @@ def _compile_node(selector, extensions):
             else:
                 raise SelectorError('Invalid arguments for :lang()')
 
-            return ('el.lang == %r or '
-                    '(el.lang is not None and el.lang.startswith(%r))'
+            return ('el.lang == %r or el.lang.startswith(%r)'
                     % (lang, lang + '-'))
         elif selector.name.startswith('nth-'):
             if selector.name == 'nth-child':
@@ -329,15 +330,21 @@ def _compile_node(selector, extensions):
         else:
             raise SelectorError('Unknown functional pseudo-class',
                                 selector.name)
-
     else:
         raise TypeError(type(selector), selector)
 
 
 def html_tag_eq(*local_names):
     if len(local_names) == 1:
-        return '(el.etree_element.tag == %r)' % (
-            '{http://www.w3.org/1999/xhtml}' + local_names[0])
+        return (
+            '((el.local_name == %r) if el.in_html_document else '
+            '(el.etree_element.tag == %r))' % (
+                local_names[0],
+                '{http://www.w3.org/1999/xhtml}' + local_names[0]))
     else:
-        return '(el.etree_element.tag in (%s))' % ', '.join(
-            repr('{http://www.w3.org/1999/xhtml}' + n) for n in local_names)
+        return (
+            '((el.local_name in (%s)) if el.in_html_document else '
+            '(el.etree_element.tag in (%s)))' % (
+                ', '.join(repr(n) for n in local_names),
+                ', '.join(repr('{http://www.w3.org/1999/xhtml}' + n)
+                          for n in local_names)))

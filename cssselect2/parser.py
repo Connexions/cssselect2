@@ -5,7 +5,7 @@
 
     A parser for CSS selectors, based on the tinycss tokenizer.
 
-    :copyright: (c) 2012 by Simon Sapin.
+    :copyright: (c) 2012 by Simon Sapin, 2017 by Guillaume Ayoub.
     :license: BSD, see LICENSE for more details.
 
 """
@@ -15,7 +15,6 @@ from __future__ import unicode_literals
 from tinycss2 import parse_component_value_list
 
 from ._compat import basestring
-
 
 __all__ = ['parse']
 
@@ -31,6 +30,7 @@ def parse(input, namespaces=None, extensions=None):
     namespaces = namespaces or {}
     extensions = extensions or {}
     yield parse_selector(tokens, namespaces, extensions)
+    tokens.skip_whitespace_and_comment()
     while 1:
         next = tokens.next()
         if next is None:
@@ -44,14 +44,16 @@ def parse(input, namespaces=None, extensions=None):
 def parse_selector(tokens, namespaces, extensions):
     result, pseudo_element = parse_compound_selector(tokens, namespaces)
     while 1:
-        has_whitespace, source_line_offset = tokens.skip_whitespace()
+        has_whitespace = tokens.skip_whitespace()
+        while tokens.skip_comment():
+            has_whitespace = tokens.skip_whitespace() or has_whitespace
         if pseudo_element is not None:
             return Selector(result, pseudo_element,
-                            extensions, source_line_offset)
+                            extensions, tokens.source_line_offset)
         peek = tokens.peek()
         if peek is None or peek == ',':
             return Selector(result, pseudo_element,
-                            extensions, source_line_offset)
+                            extensions, tokens.source_line_offset)
         elif peek in ('>', '+', '~'):
             combinator = peek.value
             tokens.next()
@@ -59,7 +61,7 @@ def parse_selector(tokens, namespaces, extensions):
             combinator = ' '
         else:
             return Selector(result, pseudo_element,
-                            extensions, source_line_offset)
+                            extensions, tokens.source_line_offset)
         compound, pseudo_element = parse_compound_selector(tokens, namespaces)
         result = CombinedSelector(result, combinator, compound)
 
@@ -74,7 +76,8 @@ def parse_compound_selector(tokens, namespaces):
             break
         simple_selectors.append(simple_selector)
 
-    if simple_selectors or type_selectors is not None:
+    if (simple_selectors or type_selectors is not None or
+            pseudo_element is not None):
         return CompoundSelector(simple_selectors), pseudo_element
     else:
         peek = tokens.peek()
@@ -137,8 +140,8 @@ def parse_simple_selector(tokens, namespaces, in_negation=False):
                     raise SelectorError(next, 'nested :not()')
                 return parse_negation(next, namespaces), None
             else:
-                return FunctionalPseudoClassSelector(name,
-                                                     next.arguments), None
+                return (
+                    FunctionalPseudoClassSelector(name, next.arguments), None)
         else:
             raise SelectorError(next, 'unexpected %s token.' % next)
     else:
@@ -163,9 +166,8 @@ def parse_negation(negation_token, namespaces):
 
 def parse_attribute_selector(tokens, namespaces):
     tokens.skip_whitespace()
-    qualified_name = parse_qualified_name(tokens,
-                                          namespaces,
-                                          is_attribute=True)
+    qualified_name = parse_qualified_name(
+        tokens, namespaces, is_attribute=True)
     if qualified_name is None:
         next = tokens.next()
         raise SelectorError(
@@ -182,13 +184,14 @@ def parse_attribute_selector(tokens, namespaces):
         tokens.next()
         tokens.skip_whitespace()
         next = tokens.next()
-        if next.type not in ('ident', 'string'):
+        if next is None or next.type not in ('ident', 'string'):
+            next_type = 'None' if next is None else next.type
             raise SelectorError(
-                next, 'expected attribute value, got %s' % next.type)
+                next, 'expected attribute value, got %s' % next_type)
         value = next.value
     else:
         raise SelectorError(
-            next, 'expected attribute selector operator, got %s' % next.type)
+            peek, 'expected attribute selector operator, got %s' % peek)
 
     tokens.skip_whitespace()
     next = tokens.next()
@@ -214,8 +217,9 @@ def parse_qualified_name(tokens, namespaces, is_attribute=False):
         tokens.next()
         namespace = namespaces.get(first_ident.value)
         if namespace is None:
-            raise SelectorError(first_ident, 'undefined namespace prefix: '
-                                + first_ident.value)
+            raise SelectorError(
+                first_ident,
+                'undefined namespace prefix: ' + first_ident.value)
     elif peek == '*':
         next = tokens.next()
         peek = tokens.peek()
@@ -243,14 +247,14 @@ def parse_qualified_name(tokens, namespaces, is_attribute=False):
 
 
 class SelectorError(ValueError):
-    """A specialized ValueError for invalid selectors."""
+    """A specialized ``ValueError`` for invalid selectors."""
 
 
 class TokenStream(object):
     def __init__(self, tokens):
         self.tokens = iter(tokens)
         self.peeked = []  # In reversed order
-        self.lines = 0
+        self.source_line_offset = 0
 
     def next(self):
         if self.peeked:
@@ -263,18 +267,26 @@ class TokenStream(object):
             self.peeked.append(next(self.tokens, None))
         return self.peeked[-1]
 
-    def skip_whitespace(self):
-        has_whitespace = False
+    def skip(self, skip_types):
+        found = False
         while 1:
             peek = self.peek()
-            if peek is None or peek.type != 'whitespace':
+            if peek is None or peek.type not in skip_types:
                 break
             self.next()
+            found = True
             if u'\n' in peek.value:
-                self.lines += 1
+                self.source_line_offset += 1
+        return found
 
-            has_whitespace = True
-        return has_whitespace, self.lines
+    def skip_whitespace(self):
+        return self.skip(['whitespace'])
+
+    def skip_comment(self):
+        return self.skip(['comment'])
+
+    def skip_whitespace_and_comment(self):
+        return self.skip(['comment', 'whitespace'])
 
 
 class Selector(object):
@@ -328,8 +340,8 @@ class CompoundSelector(object):
         if self.simple_selectors:
             # zip(*foo) turns [(a1, b1, c1), (a2, b2, c2), ...]
             # into [(a1, a2, ...), (b1, b2, ...), (c1, c2, ...)]
-            return tuple(map(sum, zip(*
-                         (sel.specificity for sel in self.simple_selectors))))
+            return tuple(map(sum, zip(
+                *(sel.specificity for sel in self.simple_selectors))))
         else:
             return 0, 0, 0
 

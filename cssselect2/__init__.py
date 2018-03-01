@@ -5,7 +5,7 @@
 
     CSS selectors for ElementTree.
 
-    :copyright: (c) 2012 by Simon Sapin.
+    :copyright: (c) 2012 by Simon Sapin, 2017 by Guillaume Ayoub.
     :license: BSD, see LICENSE for more details.
 
 """
@@ -16,24 +16,28 @@ import operator
 
 from webencodings import ascii_lower
 
-from .parser import SelectorError
-from .tree import ElementWrapper
-from .compiler import compile_selector_list, CompiledSelector
+# Classes are imported here to expose them at the top level of the module
+from .compiler import compile_selector_list  # noqa
+from .parser import SelectorError  # noqa
+from .tree import ElementWrapper  # noqa
 
 
-VERSION = '0.2a1'
+VERSION = '0.2.1'
 
 
 class Matcher(object):
+    """A CSS selectors storage that can match against HTML elements."""
     def __init__(self):
         self.id_selectors = {}
         self.class_selectors = {}
         self.lower_local_name_selectors = {}
         self.namespace_selectors = {}
         self.other_selectors = []
+        self.order = 0
 
     def add_selector(self, selector, payload):
         """
+        Add a selector and its payload to the matcher.
 
         :param selector:
             A :class:`CompiledSelector` object.
@@ -46,10 +50,13 @@ class Matcher(object):
             and will be returned as-is by :meth:`match`.
 
         """
+        self.order += 1
         if selector.never_matches:
             return
 
-        entry = selector.test, selector.specificity, payload
+        entry = (
+            selector.test, selector.specificity, self.order,
+            selector.pseudo_element, payload)
         if selector.id is not None:
             self.id_selectors.setdefault(selector.id, []).append(entry)
         elif selector.class_name is not None:
@@ -73,7 +80,7 @@ class Matcher(object):
         :returns:
             A list of the :obj:`payload` objects associated
             to selectors that match element,
-            in order of lowest to highest :attr:`~CompiledSelector.specificity`,
+            in order of lowest to highest :attr:`~CompiledSelector.specificity`
             and in order of addition with :meth:`add_selector`
             among selectors of equal specificity.
 
@@ -94,13 +101,13 @@ class Matcher(object):
         relevant_selectors.append(self.other_selectors)
 
         results = [
-            (specificity, payload)
+            (specificity, order, pseudo, payload)
             for selector_list in relevant_selectors
-            for test, specificity, payload in selector_list
+            for test, specificity, order, pseudo, payload in selector_list
             if test(element)
         ]
         results.sort(key=SORT_KEY)
-        return [payload for _specificity, payload in results]
+        return results
 
 
-SORT_KEY = operator.itemgetter(0)
+SORT_KEY = operator.itemgetter(0, 1)

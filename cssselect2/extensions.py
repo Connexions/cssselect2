@@ -4,7 +4,7 @@ import re
 
 from tinycss2 import serialize
 
-from . import extensions as ex
+from . import ext_utils as ex
 
 
 def _match(selector):
@@ -14,16 +14,6 @@ def _match(selector):
     if regex[0] in trim and regex[0] == regex[-1]:
         regex = regex[1:-1]
     return ('(re.search("%s", ex.textstring(el)) is not None)' % regex)
-
-
-def textstring(el):
-    """Return a text string of all text for subtree of el."""
-    strval = u''
-    strval += (el.etree_element.text or u'')
-    for elem in el.iter_children():
-            strval += elem.textstring()
-    strval += (el.etree_element.tail or u'')
-    return strval
 
 
 extensions = {'pseudoClass': {'match': {'callback': _match,

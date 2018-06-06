@@ -9,10 +9,12 @@ from . import ext_utils as ex
 
 def _match(selector):
     "Callback for match pseudoClass."
-    regex = re.sub(r'(?<!\\)[\\]', '', serialize(selector.arguments))
+    regex = serialize(selector.arguments)
     trim = '\"\''
     if regex[0] in trim and regex[0] == regex[-1]:
         regex = regex[1:-1]
+    else:
+        regex = re.sub(r'(?<!\\)[\\]', '', regex)
     return ('(re.search("%s", ex.textstring(el)) is not None)' % regex)
 
 

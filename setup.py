@@ -16,13 +16,13 @@ needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
 pytest_runner = ['pytest-runner'] if needs_pytest else []
 
 setup(
-    name='cssselect2',
+    name='cnx-cssselect2',
     version=VERSION,
-    author='Simon Sapin',
-    author_email='simon.sapin@exyr.org',
+    author='OpenStax CNX',
+    author_email='info@cnx.org',
     description='CSS selectors for Python ElementTree',
     long_description=README,
-    url='http://packages.python.org/cssselect2/',
+    url='https://github.com/connexions/cnx-cssselect2',
     license='BSD',
     packages=['cssselect2'],
     package_data={'cssselect2': ['tests/*']},

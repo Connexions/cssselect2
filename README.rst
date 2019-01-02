@@ -1,6 +1,8 @@
 cssselect2: CSS selectors for Python ElementTree
 ################################################
 
+Fork of ``cssselect2`` by Simon Sapin.
+
 cssselect2 is a straightforward implementation of `CSS3 Selectors`_ for markup
 documents (HTML, XML, etc.) that can be read by `ElementTree`_-like parsers
 (including cElementTree, lxml_, html5lib_, etc.)

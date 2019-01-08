@@ -13,6 +13,8 @@ def _match(selector):
     trim = '\"\''
     if regex[0] in trim and regex[0] == regex[-1]:
         regex = regex[1:-1]
+    else:
+        regex = re.sub(r'(?<!\\)[\\]', '', regex)
     return ('(re.search("%s", ex.textstring(el)) is not None)' % regex)
 
 

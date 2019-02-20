@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+0.2.3
+-----
+
+* Re-release of 0.2.2 with versioning management through git tags.
+
 0.2.2
 -----
 

@@ -6,24 +6,26 @@ import re
 import sys
 
 from setuptools import setup
+import versioneer
+
 
 ROOT = os.path.dirname(__file__)
 README = open(os.path.join(ROOT, 'README.rst')).read()
 INIT_PY = open(os.path.join(ROOT, 'cssselect2', '__init__.py')).read()
-VERSION = re.search("VERSION = '([^']+)'", INIT_PY).group(1)
 
 needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
 pytest_runner = ['pytest-runner'] if needs_pytest else []
 
 setup(
     name='cnx-cssselect2',
-    version=VERSION,
+    version=versioneer.get_version(),
     author='OpenStax CNX',
     author_email='info@cnx.org',
     description='CSS selectors for Python ElementTree',
     long_description=README,
     url='https://github.com/connexions/cnx-cssselect2',
     license='BSD',
+    cmdclass=versioneer.get_cmdclass(),
     packages=['cssselect2'],
     package_data={'cssselect2': ['tests/*']},
     install_requires=['tinycss2'],

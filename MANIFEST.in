@@ -1,3 +1,5 @@
 include README.rst CHANGES LICENSE tox.ini .coveragerc
 recursive-include docs *
 prune docs/_build
+include versioneer.py
+include cssselect2/_version.py

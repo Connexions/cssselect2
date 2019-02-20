@@ -22,7 +22,10 @@ from .parser import SelectorError  # noqa
 from .tree import ElementWrapper  # noqa
 
 
-VERSION = '0.2.1'
+from ._version import get_versions
+__version__ = get_versions()['version']
+VERSION = __version__   # BBB (2019-Feb-20) backwards compat
+del get_versions
 
 
 class Matcher(object):
@@ -111,7 +114,3 @@ class Matcher(object):
 
 
 SORT_KEY = operator.itemgetter(0, 1)
-
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
